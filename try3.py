@@ -1,15 +1,13 @@
 a = 'apple'
-b = 'samsung'
-c = '=='
+b = [i for i in range(11)]
+c = 'avg'
 
 # Создаем выражение для выполнения с использованием eval
-expression = f"{a}{c}{b}"
+expression = {'max': lambda b: max(b),
+              'min': lambda b: min(b),
+              'avg': lambda b: sum(b) / len(b)}
 
 # Выполняем выражение и получаем результат
-result = eval(expression)
 
-# Выводим результат сравнения
-if result:
-    print('da')
-else:
-    print('net')
+
+print(expression[c](b))
