@@ -1,16 +1,50 @@
 import argparse
 import csv
-import os
-from  tabulate import tabulate
+from tabulate import tabulate
 
 
 DEFAULT_FILENAME = 'products.csv'
+FILTER_OPERAND = ['>', '<', '=']
 
+
+def clean_data(raw, table_headers):
+    """Разбивает параметр на имя заголовка, операнд, значение.
+    
+    Есть проверка на отсутствие операнда.
+    Нужно дописать проверку на несколько операндов чтобы не выдавал 
+    ('Brand<', '6', '>')
+    """
+    for op in FILTER_OPERAND:
+        if op in raw:
+            try:
+                header, value = raw.split(op)
+                value = float(value) if '.' in value else int(value)
+            except ValueError as e:
+                print(f'В заданном условии {raw} содержится ошибка: {e}')
+                return
+            if header not in table_headers:
+                print(f'Неверно указано имя столбца: {header}')
+                return
+            if op == '=':
+                op = '=='
+            return header, value, op
+    print(f'Не указан, либо неверно указан операнд. '
+          f'Операнд должен быть {FILTER_OPERAND}')   
+    return
+
+
+def filter_table(table_data, header, value, op):
+    filtered_data = []
+
+    for row in table_data:
+        current_value = row[header]
+        if eval(f'{current_value}{op}{value}'):
+            filtered_data.append(row)
+    return filtered_data
 
 
 
 if __name__ == '__main__':
-
 
     parser = argparse.ArgumentParser(description='smart .csv parser')
 
@@ -33,12 +67,30 @@ if __name__ == '__main__':
         # формируем таблицу как список словарей
         table_data = list(file_reader)
         table_headers = table_data[0].keys()
+    
+    # потом убрать
+    working_data = table_data
+
+    if args.where:
+        print('есть фильтр')
+        #print(clean_data(args.where, table_headers))
+        if clean_data(args.where, table_headers):
+            header, value, op = clean_data(args.where, table_headers)
+            working_data = filter_table(working_data, header, value, op)
+
+    if args.aggregate:
+        print('есть агрегатор')
+        if clean_data(args.where, table_headers):
+            header, value, op = clean_data(args.where, table_headers)
+            #working_data = aggregate_table(working_data, header, value, op)
+
 
 
     # print(table_headers)
     # print(table_data)
     line = []
-    for row in table_data:
+    for row in working_data:
+        # print(row)
         line.append(row.values())
     # не хочет список словарей. Только список списков без заголовков
     table = tabulate(tabular_data=line, headers=table_headers, tablefmt='grid')
