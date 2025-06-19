@@ -4,8 +4,7 @@ from tabulate import tabulate
 
 
 DEFAULT_FILENAME = 'products.csv'
-FILTER_OPERAND = ['>', '<', '=']
-
+AVAILABLE_OPERAND = ['>', '<', '=', 'avg', 'min', 'max']
 
 def clean_data(raw, table_headers):
     """Разбивает параметр на имя заголовка, операнд, значение.
@@ -14,22 +13,22 @@ def clean_data(raw, table_headers):
     Нужно дописать проверку на несколько операндов чтобы не выдавал 
     ('Brand<', '6', '>')
     """
-    for op in FILTER_OPERAND:
+    for op in AVAILABLE_OPERAND:
         if op in raw:
-            try:
-                header, value = raw.split(op)
-                value = float(value) if '.' in value else int(value)
-            except ValueError as e:
-                print(f'В заданном условии {raw} содержится ошибка: {e}')
-                return
-            if header not in table_headers:
-                print(f'Неверно указано имя столбца: {header}')
-                return
+            # try:
+            header, value = raw.split(op)
+            #     # value = float(value) if '.' in value else int(value)
+            # except ValueError as e:
+            #     print(f'В заданном условии {raw} содержится ошибка: {e}')
+            #     # return
+            # if header not in table_headers:
+            #     print(f'Неверно указано имя столбца: {header}')
+            #     return
             if op == '=':
                 op = '=='
             return header, value, op
     print(f'Не указан, либо неверно указан операнд. '
-          f'Операнд должен быть {FILTER_OPERAND}')   
+          f'Операнд должен быть {AVAILABLE_OPERAND}')
     return
 
 
@@ -41,6 +40,18 @@ def filter_table(table_data, header, value, op):
         if eval(f'{current_value}{op}{value}'):
             filtered_data.append(row)
     return filtered_data
+
+
+def aggregate_table(working_data, header, value):
+    data_for_aggregate = []
+
+    for row in working_data:
+        data_for_aggregate.append(float(row[header]))
+    if value == 'avg':
+        result = sum(data_for_aggregate) / len(data_for_aggregate)
+    else:
+        result = eval(f'{value}({data_for_aggregate})')
+    return [{header: round(result, 2), },]
 
 
 
@@ -70,28 +81,31 @@ if __name__ == '__main__':
     
     # потом убрать
     working_data = table_data
-
+    table = tabulate(tabular_data=working_data, headers='keys', tablefmt='grid')
+    print(table)    
     if args.where:
         print('есть фильтр')
         #print(clean_data(args.where, table_headers))
         if clean_data(args.where, table_headers):
             header, value, op = clean_data(args.where, table_headers)
             working_data = filter_table(working_data, header, value, op)
-
+    table = tabulate(tabular_data=working_data, headers='keys', tablefmt='grid')
+    print('после фильтрации')
+    print(table)
     if args.aggregate:
         print('есть агрегатор')
-        if clean_data(args.where, table_headers):
-            header, value, op = clean_data(args.where, table_headers)
-            #working_data = aggregate_table(working_data, header, value, op)
+        if clean_data(args.aggregate, table_headers):
+            header, value, op = clean_data(args.aggregate, table_headers)
+            working_data = aggregate_table(working_data, header, value)
 
-
+    print('результат')
 
     # print(table_headers)
     # print(table_data)
-    line = []
-    for row in working_data:
-        # print(row)
-        line.append(row.values())
+    # line = []
+    # for row in working_data:
+    #     # print(row)
+    #     line.append(row.values())
     # не хочет список словарей. Только список списков без заголовков
-    table = tabulate(tabular_data=line, headers=table_headers, tablefmt='grid')
+    table = tabulate(tabular_data=working_data, headers='keys', tablefmt='grid')
     print(table)
