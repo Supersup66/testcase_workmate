@@ -15,9 +15,23 @@ AVAILABLE_AGGREGATORS = {
     'min': lambda b: min(b),
     'avg': lambda b: sum(b) / len(b)
 }
-        
 
-def clean_data(raw, table_headers):
+
+def read_csv(filename):
+    with open(filename, 'r', encoding='utf-8') as f:
+        file_reader = csv.DictReader(f)
+        return list(file_reader)
+
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def clean_data(raw, headers):
     """Разбивает параметр на имя заголовка, операнд, значение.
     
     Есть проверка на отсутствие операнда.
@@ -26,15 +40,10 @@ def clean_data(raw, table_headers):
     """
     for op in AVAILABLE_FILTERS:
         if op in raw:
-            # try:
             header, value = raw.split(op)
-            #     # value = float(value) if '.' in value else int(value)
-            # except ValueError as e:
-            #     print(f'В заданном условии {raw} содержится ошибка: {e}')
-            #     # return
-            # if header not in table_headers:
-            #     print(f'Неверно указано имя столбца: {header}')
-            #     return
+            if header not in headers:
+                print(f'Неверно указано имя столбца: {header}')
+                return
             return header, value, op
     print(f'Не указан, либо неверно указан операнд. '
           f'Операнд должен быть {AVAILABLE_FILTERS.keys()}')
@@ -46,19 +55,21 @@ def filter_table(table_data, header, value, op):
 
     for row in table_data:
         current_value = row[header]
+        if is_number(current_value) and is_number(value):
+            current_value = float(current_value)
+            value = float(value)
         if AVAILABLE_FILTERS[op](current_value, value):
             filtered_data.append(row)
     return filtered_data
 
 
-def aggregate_table(working_data, header, value):
+def aggregate_table(table_data, header, value):
     data_for_aggregate = []
 
-    for row in working_data:
+    for row in table_data:
         data_for_aggregate.append(float(row[header]))
     result = AVAILABLE_AGGREGATORS[value](data_for_aggregate)
     return [{header: round(result, 2), },]
-
 
 
 if __name__ == '__main__':
@@ -74,44 +85,21 @@ if __name__ == '__main__':
     # Namespace(file='products.csv', where=None, aggregate=None)
     args = parser.parse_args()
 
+    working_data = read_csv(args.file)
+    headers = working_data[0].keys()
 
-    with open(args.file, 'r', encoding='utf-8') as f:
-        file_reader = csv.DictReader(f)
-        # print(list(file_reader))
-        # for row in file_reader:
-        #     print('Строка: \n')
-        #     print(row)
-        # формируем таблицу как список словарей
-        table_data = list(file_reader)
-        table_headers = table_data[0].keys()
-    
-    # потом убрать
-    working_data = table_data
-    table = tabulate(tabular_data=working_data, headers='keys', tablefmt='grid')
-    print(table)    
-    if args.where:
-        print('есть фильтр')
-        #print(clean_data(args.where, table_headers))
-        if clean_data(args.where, table_headers):
-            header, value, op = clean_data(args.where, table_headers)
-            working_data = filter_table(working_data, header, value, op)
-    table = tabulate(tabular_data=working_data, headers='keys', tablefmt='grid')
-    print('после фильтрации')
-    print(table)
-    if args.aggregate:
-        print('есть агрегатор')
-        if clean_data(args.aggregate, table_headers):
-            header, value, op = clean_data(args.aggregate, table_headers)
-            working_data = aggregate_table(working_data, header, value)
+    if args.where and clean_data(args.where, headers):
+        header, value, op = clean_data(args.where)
+        working_data = filter_table(working_data, header, value, op)
+    else:
+        working_data = []
 
-    print('результат')
+    if args.aggregate and clean_data(args.aggregate, headers):
+        header, value, _ = clean_data(args.aggregate)
+        working_data = aggregate_table(working_data, header, value)
+    else:
+        working_data = []
 
-    # print(table_headers)
-    # print(table_data)
-    # line = []
-    # for row in working_data:
-    #     # print(row)
-    #     line.append(row.values())
     # не хочет список словарей. Только список списков без заголовков
     table = tabulate(tabular_data=working_data, headers='keys', tablefmt='grid')
     print(table)

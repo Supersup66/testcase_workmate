@@ -1,13 +1,20 @@
-a = 'apple'
-b = [i for i in range(11)]
-c = 'avg'
+import os
 
-# Создаем выражение для выполнения с использованием eval
-expression = {'max': lambda b: max(b),
-              'min': lambda b: min(b),
-              'avg': lambda b: sum(b) / len(b)}
-
-# Выполняем выражение и получаем результат
+current_path = os.getcwd()
+print(current_path)  # Текущий рабочий каталог
 
 
-print(expression[c](b))
+relative_path = 'folder/subfolder/file.txt'
+absolute_path = os.path.abspath(relative_path)
+print(absolute_path)  # Полный путь к файлу
+
+
+path = 'folder/subfolder/file.txt'
+if os.path.exists(path):
+    print("Путь существует")
+else:
+    print("Путь не существует")
+
+# Создание пути с использованием os.path.join
+path = os.path.join('folder', 'subfolder', 'file.txt')
+print(path)  # Вывод: folder/subfolder/file.txt (на Unix) или folder\subfolder\file.txt (на Windows)
