@@ -1,6 +1,5 @@
 import pytest
-
-from .. import main  # read_csv, clean_data, filter_table, aggregate_table
+import main  # import read_csv, clean_data, filter_table, aggregate_table
 
 
 def test_read_csv(csv_filename, table_data):
@@ -12,12 +11,12 @@ def test_read_csv(csv_filename, table_data):
             ('brand=apple', 'brand', 'apple', '='),
             ('price>149', 'price', '149', '>'),
             ('rating=avg', 'rating', 'avg', '='),
+            ('price=149', 'price', '149', '=')
         ]
 )
 def test_clean_data(table_data, raw, header, value, op):
     headers = table_data[0].keys()
     assert main.clean_data(raw, headers) == (header, value, op)
-    assert main.clean_data('name149', headers) is None
 
 
 @pytest.mark.parametrize(
@@ -34,8 +33,11 @@ def test_clean_data(table_data, raw, header, value, op):
                'price': '1199',
                'rating': '4.8'}]),
 
-            ('price', '100', '<',
-             []),
+            ('price', '149', '=',
+             [{'brand': 'xiaomi',
+               'name': 'redmi 10c',
+               'price': '149',
+               'rating': '4.1'}]),
         ]
 )
 def test_filter_table(table_data, header, value, op, result):
@@ -46,7 +48,8 @@ def test_filter_table(table_data, header, value, op, result):
         'header, value, result', [
             ('price', 'max', [{'price': 1199.0}]),
             ('rating', 'min', [{'rating': 4.1}]),
-            ('rating', 'avg', [{'rating': 4.49}])
+            ('rating', 'avg', [{'rating': 4.49}]),
+            ('price', 'min', [{'price': 149.0}]),
         ]
 )
 def test_aggregate_table(table_data, header, value, result):

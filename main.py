@@ -2,6 +2,8 @@ import argparse
 import csv
 from tabulate import tabulate
 
+from exceptions import HeaderError, NoOperand
+
 
 DEFAULT_FILENAME = 'products.csv'
 
@@ -33,21 +35,18 @@ def is_number(s):
 
 def clean_data(raw, headers):
     """Разбивает параметр на имя заголовка, операнд, значение.
-    
-    Есть проверка на отсутствие операнда.
-    Нужно дописать проверку на несколько операндов чтобы не выдавал 
-    ('Brand<', '6', '>')
+
+    Есть проверка на ошибку в операнде и имени заголовка.
     """
     for op in AVAILABLE_FILTERS:
         if op in raw:
             header, value = raw.split(op)
             if header not in headers:
-                print(f'Неверно указано имя столбца: {header}')
-                return
+                raise HeaderError(f'Неверно указано имя столбца: {header}')
             return header, value, op
-    print(f'Не указан, либо неверно указан операнд. '
-          f'Операнд должен быть {AVAILABLE_FILTERS.keys()}')
-    return
+    raise NoOperand(
+        f'Операнд должен быть: {", ".join(AVAILABLE_FILTERS.keys())}'
+    )
 
 
 def filter_table(table_data, header, value, op):
@@ -76,30 +75,37 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='smart .csv parser')
 
-    parser.add_argument('--file', type=str, help='select .csv file to parse', default=DEFAULT_FILENAME)
-    parser.add_argument('--where', type=str, help='select filter conditions')
-    parser.add_argument('--aggregate', type=str, help='select aggregate conditions')
+    parser.add_argument(
+        '--file',
+        type=str,
+        help='select .csv file to parse',
+        default=DEFAULT_FILENAME
+    )
+    parser.add_argument(
+        '--where',
+        type=str,
+        help='select filter conditions'
+    )
+    parser.add_argument(
+        '--aggregate',
+        type=str,
+        help='select aggregate conditions'
+    )
 
-    # Передаем в переменную полученные аргументы
-    # Переменная имеет вид 
-    # Namespace(file='products.csv', where=None, aggregate=None)
     args = parser.parse_args()
 
     working_data = read_csv(args.file)
     headers = working_data[0].keys()
 
     if args.where and clean_data(args.where, headers):
-        header, value, op = clean_data(args.where)
+        header, value, op = clean_data(args.where, headers)
         working_data = filter_table(working_data, header, value, op)
-    else:
-        working_data = []
 
     if args.aggregate and clean_data(args.aggregate, headers):
-        header, value, _ = clean_data(args.aggregate)
+        header, value, _ = clean_data(args.aggregate, headers)
         working_data = aggregate_table(working_data, header, value)
-    else:
-        working_data = []
 
-    # не хочет список словарей. Только список списков без заголовков
-    table = tabulate(tabular_data=working_data, headers='keys', tablefmt='grid')
+    table = tabulate(
+        tabular_data=working_data, headers='keys', tablefmt='grid'
+    )
     print(table)
