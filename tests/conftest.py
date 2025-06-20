@@ -1,5 +1,6 @@
-import pytest
 import csv
+
+import pytest
 
 
 @pytest.fixture

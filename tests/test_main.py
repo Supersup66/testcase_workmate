@@ -1,8 +1,10 @@
 import pytest
-import main  # import read_csv, clean_data, filter_table, aggregate_table
+
+import main
 
 
 def test_read_csv(csv_filename, table_data):
+    """Тест наличия csv файла."""
     assert main.read_csv(csv_filename) == table_data
 
 
@@ -15,6 +17,7 @@ def test_read_csv(csv_filename, table_data):
         ]
 )
 def test_clean_data(table_data, raw, header, value, op):
+    """Тест преобразования запроса."""
     headers = table_data[0].keys()
     assert main.clean_data(raw, headers) == (header, value, op)
 
@@ -41,6 +44,7 @@ def test_clean_data(table_data, raw, header, value, op):
         ]
 )
 def test_filter_table(table_data, header, value, op, result):
+    """Тест фильтрации данных таблицы."""
     assert main.filter_table(table_data, header, value, op) == result
 
 
@@ -53,4 +57,5 @@ def test_filter_table(table_data, header, value, op, result):
         ]
 )
 def test_aggregate_table(table_data, header, value, result):
+    """Тест аггрегации данных таблицы."""
     assert main.aggregate_table(table_data, header, value) == result

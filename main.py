@@ -1,31 +1,34 @@
 import argparse
 import csv
+from typing import Any
+
 from tabulate import tabulate
 
 from exceptions import HeaderError, NoOperand
 
+DEFAULT_FILENAME: str = 'products.csv'
 
-DEFAULT_FILENAME = 'products.csv'
-
-AVAILABLE_FILTERS = {
+AVAILABLE_FILTERS: dict[str, Any] = {
     '>': lambda a, b: a > b,
     '<': lambda a, b: a < b,
     '=': lambda a, b: a == b
 }
-AVAILABLE_AGGREGATORS = {
+AVAILABLE_AGGREGATORS: dict[str, Any] = {
     'max': lambda b: max(b),
     'min': lambda b: min(b),
     'avg': lambda b: sum(b) / len(b)
 }
 
 
-def read_csv(filename):
+def read_csv(filename: str) -> list[dict[str, str]]:
+    """Считывает файл csv и возвращает список словарей."""
     with open(filename, 'r', encoding='utf-8') as f:
         file_reader = csv.DictReader(f)
         return list(file_reader)
 
 
-def is_number(s):
+def is_number(s: str) -> bool:
+    """Проверяет, явлчется ли переменная десятичным числом."""
     try:
         float(s)
         return True
@@ -33,7 +36,7 @@ def is_number(s):
         return False
 
 
-def clean_data(raw, headers):
+def clean_data(raw: str, headers: list[str]) -> tuple[str, str, str]:
     """Разбивает параметр на имя заголовка, операнд, значение.
 
     Есть проверка на ошибку в операнде и имени заголовка.
@@ -42,16 +45,23 @@ def clean_data(raw, headers):
         if op in raw:
             header, value = raw.split(op)
             if header not in headers:
-                raise HeaderError(f'Неверно указано имя столбца: {header}')
-            return header, value, op
+                raise HeaderError(f'Неправильно указано имя столбца: {header}')
+            return header, value.lower(), op
     raise NoOperand(
+        f'Неправильный операнд: "{op}". '
         f'Операнд должен быть: {", ".join(AVAILABLE_FILTERS.keys())}'
     )
 
 
-def filter_table(table_data, header, value, op):
-    filtered_data = []
+def filter_table(
+        table_data: list[dict[str, str]],
+        header: str,
+        value: str,
+        op: str
+        ) -> list[dict[str, str]]:
+    """Фильтрует данные из таблицы по заданному условию."""
 
+    filtered_data = []
     for row in table_data:
         current_value = row[header]
         if is_number(current_value) and is_number(value):
@@ -62,7 +72,13 @@ def filter_table(table_data, header, value, op):
     return filtered_data
 
 
-def aggregate_table(table_data, header, value):
+def aggregate_table(
+        table_data: list[dict[str, str]],
+        header: str,
+        value: str
+        ) -> list[dict[str, float]]:
+    """Агрегирует данные из таблицы по заданному условию."""
+
     data_for_aggregate = []
 
     for row in table_data:
@@ -94,14 +110,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    working_data = read_csv(args.file)
-    headers = working_data[0].keys()
+    working_data: list[dict[str, str]] = read_csv(args.file)
+    headers: list[str] = list(working_data[0].keys())
 
-    if args.where and clean_data(args.where, headers):
+    if args.where:
         header, value, op = clean_data(args.where, headers)
         working_data = filter_table(working_data, header, value, op)
 
-    if args.aggregate and clean_data(args.aggregate, headers):
+    if args.aggregate:
         header, value, _ = clean_data(args.aggregate, headers)
         working_data = aggregate_table(working_data, header, value)
 
