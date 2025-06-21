@@ -6,8 +6,6 @@ from tabulate import tabulate
 
 from exceptions import HeaderError, NoOperand
 
-DEFAULT_FILENAME: str = 'products.csv'
-
 AVAILABLE_FILTERS: dict[str, Any] = {
     '>': lambda a, b: a > b,
     '<': lambda a, b: a < b,
@@ -126,8 +124,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--file',
         type=str,
-        help='select .csv file to parse',
-        default=DEFAULT_FILENAME
+        help='select .csv file to parse'
     )
     parser.add_argument(
         '--where',
