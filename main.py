@@ -34,7 +34,7 @@ def read_csv(filename: str) -> list[dict[str, str]]:
 
 
 def is_number(s: str) -> bool:
-    """Проверяет, явлчется ли переменная десятичным числом."""
+    """Проверяет, возможно ли преобразовать строку в число."""
     try:
         float(s)
         return True

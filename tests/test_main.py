@@ -9,6 +9,19 @@ def test_read_csv(csv_filename, table_data):
 
 
 @pytest.mark.parametrize(
+        'value, result', [
+            ('134', True),
+            ('6.23', True),
+            ('some', False),
+            ('13C', False)
+        ]
+)
+def test_in_number(value, result):
+    """Тест определения числовых значений."""
+    assert main.is_number(value) == result
+
+
+@pytest.mark.parametrize(
         'raw, header, value, op', [
             ('brand=apple', 'brand', 'apple', '='),
             ('price>149', 'price', '149', '>'),
@@ -52,7 +65,7 @@ def test_filter_table(table_data, header, value, op, result):
         'header, value, result', [
             ('price', 'max', [{'price': 1199.0}]),
             ('rating', 'min', [{'rating': 4.1}]),
-            ('rating', 'avg', [{'rating': 4.49}]),
+            ('rating', 'avg', [{'rating': 4.62}]),
             ('price', 'min', [{'price': 149.0}]),
         ]
 )
@@ -61,27 +74,49 @@ def test_aggregate_table(table_data, header, value, result):
     assert main.aggregate_table(table_data, header, value) == result
 
 
-"""def column_data_to_float(
-        table_data: list[dict[str, str]],
-        header: str,
-        ) -> list[dict[str, str]]:
+@pytest.mark.parametrize(
+        'header, type', [
+            ('price', float),
+            ('name', str)
+        ]
+)
+def test_column_data_to_float(table_data, header, type):
+    """Тест конвертации значиний столбца в число."""
+    assert isinstance(table_data[0][header], str) is True
+    converted_table = main.column_data_to_float(table_data, header)
+    assert isinstance(converted_table[0][header], type) is True
 
-    if is_number(table_data[0][header]):
-        for row in table_data:
-            row[header] = float(row[header])
-    return table_data
-    
-    
-def order_table(
-        table_data: list[dict[str, str]],
-        header: str,
-        value: str
-        ) -> list[dict[str, float]]:
 
-    #### ~~~~Добавить проверку - если число - то преобразовать в число
-    if is_number(table_data[0][header]):
-        table_data = column_data_to_float(table_data, header)
-    if value == 'asc':
-        return sorted(table_data, key=lambda x: x[header])
-    if value == 'desc':
-        return sorted(table_data, key=lambda x: x[header], reverse=True)"""
+@pytest.mark.parametrize(
+        'header, value, result', [
+            ('name', 'desc', [
+                {'name': 'redmi note 12', 'brand': 'xiaomi',
+                 'price': '199', 'rating': '4.6'},
+                {'name': 'redmi 10c', 'brand': 'xiaomi',
+                 'price': '149', 'rating': '4.1'},
+                {'name': 'iphone 15 pro', 'brand': 'apple',
+                 'price': '999', 'rating': '4.9'},
+                {'name': 'iphone 14', 'brand': 'apple',
+                 'price': '799', 'rating': '4.7'},
+                {'name': 'galaxy s23 ultra', 'brand': 'samsung',
+                 'price': '1199', 'rating': '4.8'}]),
+            ('rating', 'asc', [
+                {'name': 'redmi 10c', 'brand': 'xiaomi',
+                 'price': '149', 'rating': 4.1},
+                {'name': 'redmi note 12', 'brand': 'xiaomi',
+                 'price': '199', 'rating': 4.6},
+                {'name': 'iphone 14', 'brand': 'apple',
+                 'price': '799', 'rating': 4.7},
+                {'name': 'galaxy s23 ultra', 'brand': 'samsung',
+                 'price': '1199', 'rating': 4.8},
+                {'name': 'iphone 15 pro', 'brand': 'apple',
+                 'price': '999', 'rating': 4.9}])
+        ]
+)
+def test_ordering_table(table_data, header, value, result):
+
+    if main.is_number(table_data[0][header]):
+        table_data = main.column_data_to_float(table_data, header)
+
+    ordered_table = main.AVAILABLE_ORDERING[value](table_data, header)
+    assert ordered_table == result
