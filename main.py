@@ -62,7 +62,7 @@ def clean_data(raw: str, headers: list[str]) -> tuple[str, str, str]:
             header, value = raw.split(op)
             if header not in headers:
                 raise HeaderError(f'Неправильно указано имя столбца: {header}')
-            return header, value.lower(), op
+            return header, value, op
     raise NoOperand(
         f'Неправильный операнд. '
         f'Операнд должен быть: {", ".join(AVAILABLE_FILTERS.keys())}'
