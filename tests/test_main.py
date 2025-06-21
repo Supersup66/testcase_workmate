@@ -59,3 +59,29 @@ def test_filter_table(table_data, header, value, op, result):
 def test_aggregate_table(table_data, header, value, result):
     """Тест аггрегации данных таблицы."""
     assert main.aggregate_table(table_data, header, value) == result
+
+
+"""def column_data_to_float(
+        table_data: list[dict[str, str]],
+        header: str,
+        ) -> list[dict[str, str]]:
+
+    if is_number(table_data[0][header]):
+        for row in table_data:
+            row[header] = float(row[header])
+    return table_data
+    
+    
+def order_table(
+        table_data: list[dict[str, str]],
+        header: str,
+        value: str
+        ) -> list[dict[str, float]]:
+
+    #### ~~~~Добавить проверку - если число - то преобразовать в число
+    if is_number(table_data[0][header]):
+        table_data = column_data_to_float(table_data, header)
+    if value == 'asc':
+        return sorted(table_data, key=lambda x: x[header])
+    if value == 'desc':
+        return sorted(table_data, key=lambda x: x[header], reverse=True)"""

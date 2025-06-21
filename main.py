@@ -18,6 +18,12 @@ AVAILABLE_AGGREGATORS: dict[str, Any] = {
     'min': lambda b: min(b),
     'avg': lambda b: sum(b) / len(b)
 }
+AVAILABLE_ORDERING: dict[str, Any] = {
+    'asc': lambda table, header: sorted(
+        table, key=lambda x: x[header]),
+    'desc': lambda table, header: sorted(
+        table, key=lambda x: x[header], reverse=True)
+}
 
 
 def read_csv(filename: str) -> list[dict[str, str]]:
@@ -34,6 +40,18 @@ def is_number(s: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+def column_data_to_float(
+        table_data: list[dict[str, str]],
+        header: str,
+        ) -> list[dict[str, str]]:
+    """Заменяет значения в столбце на числовые."""
+
+    if is_number(table_data[0][header]):
+        for row in table_data:
+            row[header] = float(row[header])
+    return table_data
 
 
 def clean_data(raw: str, headers: list[str]) -> tuple[str, str, str]:
@@ -87,6 +105,20 @@ def aggregate_table(
     return [{header: round(result, 2), },]
 
 
+def order_table(
+        table_data: list[dict[str, str]],
+        header: str,
+        value: str
+        ) -> list[dict[str, float]]:
+    """Сортирует данные из таблицы по заданному условию."""
+
+    if is_number(table_data[0][header]):
+        table_data = column_data_to_float(table_data, header)
+
+    ordered_table = AVAILABLE_ORDERING[value](table_data, header)
+    return ordered_table
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='smart .csv parser')
@@ -107,7 +139,11 @@ if __name__ == '__main__':
         type=str,
         help='select aggregate conditions'
     )
-
+    parser.add_argument(
+        '--order_by',
+        type=str,
+        help='select ordering condition'
+    )
     args = parser.parse_args()
 
     working_data: list[dict[str, str]] = read_csv(args.file)
@@ -120,6 +156,10 @@ if __name__ == '__main__':
     if args.aggregate:
         header, value, _ = clean_data(args.aggregate, headers)
         working_data = aggregate_table(working_data, header, value)
+
+    if args.order_by:
+        header, value, op = clean_data(args.order_by, headers)
+        working_data = order_table(working_data, header, value)
 
     table = tabulate(
         tabular_data=working_data, headers='keys', tablefmt='grid'
