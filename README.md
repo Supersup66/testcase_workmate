@@ -32,7 +32,7 @@
   ```
   ![image](https://github.com/user-attachments/assets/eef654bf-6988-4bcd-9be2-32c22ab62832)
 
-- Аггрегация данных
+- Агрегация данных
   ```
   python main.py --file "products.csv" --aggregate "rating=avg"
   ```
